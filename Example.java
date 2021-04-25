@@ -17,7 +17,7 @@ public class Example {
       }
 
       ChatDumpBot bot = new ChatDumpBot();
-      bot.run(args[0], port, true);
+      bot.run(args[0], port, true, true);
     }
   }
 

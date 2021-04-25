@@ -48,13 +48,13 @@ public abstract class Bot {
   protected abstract void onTick(); // Ran 20 times per second
 
   /* Run the bot on a server */
-  public void run(String host, int port, boolean stayConnected) {
+  public void run(String host, int port, boolean authenticate, boolean stayConnected) {
 
     do {
 
       // Connect to server
       try {
-        this.connect(host, port);
+        this.connect(host, port, authenticate);
       } catch(AuthenticationException except) {
         this.dateAndPrint(String.format("Authentication error: %s", except.getMessage()), System.err);
         break;
@@ -164,8 +164,8 @@ public abstract class Bot {
     }
   }
 
-  private void connect(String host, int port) throws IOException, UnknownHostException, AuthenticationException {
-    ConnectionInit handle = new ConnectionInit(host, port);
+  private void connect(String host, int port, boolean authenticate) throws IOException, UnknownHostException, AuthenticationException {
+    ConnectionInit handle = new ConnectionInit(host, port, authenticate);
     String username = handle.login();
     this.co = handle.getConnection();
     this.dateAndPrint(String.format("Connected to %s under username \"%s\"", this.co.getHost(), username), System.out);
