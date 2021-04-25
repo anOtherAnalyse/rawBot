@@ -19,13 +19,13 @@ public class ChatDumpBot extends Bot {
 
   protected void onPacketReceived(PacketIn packet) {
     if(packet instanceof ChatReceivePacket) {
-      if(this.isWindows) System.out.println(((ChatReceivePacket) packet).getMessage().getUnformattedText());
-      else System.out.println(((ChatReceivePacket) packet).getMessage().getFormattedText());
+      if(this.isWindows) this.dateAndPrint(((ChatReceivePacket) packet).getMessage().getUnformattedText(), System.out);
+      else this.dateAndPrint(((ChatReceivePacket) packet).getMessage().getFormattedText(), System.out);
     }
   }
 
   protected void onDeath() {
-    System.out.println("Ho no we died");
+    this.dateAndPrint("Ho no we died", System.out);
     this.sendPacket(new ClientStatusPacket(ClientStatusPacket.State.PERFORM_RESPAWN)); // Respawn
   }
 

@@ -52,8 +52,8 @@ public class ConnectionInit {
     this.co.setConnectionState(requestedState);
   }
 
-  /* Log into the server */
-  public void login() throws IOException, AuthenticationException {
+  /* Log into the server - return bot username */
+  public String login() throws IOException, AuthenticationException {
 
     // Authenticate
     if(this.authenticate) {
@@ -80,7 +80,6 @@ public class ConnectionInit {
           break;
         case 2:
           LoginSuccessPacket logsuc = (LoginSuccessPacket) pin;
-          System.out.println(String.format("Connected to %s under username \"%s\"", this.co.getHost(), logsuc.getUsername()));
           break;
         case 1:
           EncryptionRequestPacket encreq = (EncryptionRequestPacket)pin;
@@ -90,6 +89,8 @@ public class ConnectionInit {
 
     // we are now playing
     this.co.setConnectionState(EnumConnectionState.PLAY);
+
+    return ((LoginSuccessPacket) pin).getUsername();
   }
 
   // Start secured channel mode

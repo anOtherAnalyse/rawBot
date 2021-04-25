@@ -1,9 +1,11 @@
 package rawbot.bot;
 
+import java.io.PrintStream;
 import java.lang.InterruptedException;
 import java.lang.Thread;
 import java.net.UnknownHostException;
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -54,15 +56,15 @@ public abstract class Bot {
       try {
         this.connect(host, port);
       } catch(AuthenticationException except) {
-        System.err.println(String.format("Authentication error: %s", except.getMessage()));
+        this.dateAndPrint(String.format("Authentication error: %s", except.getMessage()), System.err);
         break;
       } catch(UnknownHostException except) {
-        System.err.println(String.format("Unknown host: %s", except.getMessage()));
+        this.dateAndPrint(String.format("Unknown host: %s", except.getMessage()), System.err);
         break;
       } catch(IOException except) {
-        System.err.println(String.format("Can not connect to server: %s", except.getMessage()));
+        this.dateAndPrint(String.format("Can not connect to server: %s", except.getMessage()), System.err);
       } catch(RuntimeException except) {
-        System.err.println(String.format("Internal error: %s", except.getMessage()));
+        this.dateAndPrint(String.format("Internal error: %s", except.getMessage()), System.err);
         except.printStackTrace();
         break;
       }
@@ -78,15 +80,15 @@ public abstract class Bot {
           try {
             packet = this.co.readPacket();
           } catch (DisconnectedException except) {
-            System.out.println(String.format("Disconnected: %s", except.getMessage()));
+            this.dateAndPrint(String.format("Disconnected: %s", except.getMessage()), System.out);
             this.onDisconnectedAS(except);
             break;
           } catch (IOException except) {
-            System.out.println(String.format("Socket closed: %s", except.getMessage()));
+            this.dateAndPrint(String.format("Socket closed: %s", except.getMessage()), System.out);
             this.onDisconnectedAS(except);
             break;
           } catch (RuntimeException except) {
-            System.err.println(String.format("Internal error: %s", except.getMessage()));
+            this.dateAndPrint(String.format("Internal error: %s", except.getMessage()), System.err);
             except.printStackTrace();
             stayConnected = false;
             break;
@@ -122,27 +124,27 @@ public abstract class Bot {
         try {
           this.co.close();
         } catch(IOException except) {
-          System.err.println("Could not close socket: " + except.getMessage());
+          this.dateAndPrint("Could not close socket: " + except.getMessage(), System.err);
         }
 
         if(stayConnected) {
-          System.out.println(String.format("Reconnecting in %d seconds..", Bot.RECONNECT_DELAY / 1000));
+          this.dateAndPrint(String.format("Reconnecting in %d seconds..", Bot.RECONNECT_DELAY / 1000), System.out);
 
           try {
             Thread.sleep(Bot.RECONNECT_DELAY);
           } catch (InterruptedException e) {
-            System.err.println("Main thread was interrupted, aborting..");
+            this.dateAndPrint("Main thread was interrupted, aborting..", System.err);
             stayConnected = false;
           }
         }
 
       } else if(stayConnected) {
-        System.out.println(String.format("Retrying in %d seconds..", Bot.RETRY_DELAY / 1000));
+        this.dateAndPrint(String.format("Retrying in %d seconds..", Bot.RETRY_DELAY / 1000), System.out);
 
         try {
           Thread.sleep(Bot.RETRY_DELAY);
         } catch (InterruptedException e) {
-          System.err.println("Main thread was interrupted, aborting..");
+          this.dateAndPrint("Main thread was interrupted, aborting..", System.err);
           stayConnected = false;
         }
       }
@@ -158,14 +160,20 @@ public abstract class Bot {
     try {
       this.co.writePacket(packet);
     } catch(IOException except) {
-      System.err.println(String.format("Error: could not send packet \"%s\": %s", packet.getClass().toString(), except.getMessage()));
+      this.dateAndPrint(String.format("Error: could not send packet \"%s\": %s", packet.getClass().toString(), except.getMessage()), System.err);
     }
   }
 
   private void connect(String host, int port) throws IOException, UnknownHostException, AuthenticationException {
     ConnectionInit handle = new ConnectionInit(host, port);
-    handle.login();
+    String username = handle.login();
     this.co = handle.getConnection();
+    this.dateAndPrint(String.format("Connected to %s under username \"%s\"", this.co.getHost(), username), System.out);
+  }
+
+  public void dateAndPrint(String message, PrintStream stream) {
+    Date now = new Date(System.currentTimeMillis());
+    stream.println(String.format("[%d:%d:%d] %s", now.getHours(), now.getMinutes(), now.getSeconds(), message));
   }
 
   /* Asynchronous callbacks - make sure every bot operation is treated sequentially - easier to manage */
@@ -220,7 +228,7 @@ public abstract class Bot {
         try {
           Thread.sleep(50);
         } catch (InterruptedException e) {
-          System.err.println("Tick thread was interrupted, aborting..");
+          this.bot.dateAndPrint("Tick thread was interrupted, aborting..", System.err);
           break;
         }
       }
