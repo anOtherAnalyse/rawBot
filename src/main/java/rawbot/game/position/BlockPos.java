@@ -2,12 +2,15 @@ package rawbot.game.position;
 
 public class BlockPos extends Vec3 {
 
-  public static BlockPos fromLong(long serialized) {
-    return new BlockPos(Vec3.fromLong(serialized));
+  public static BlockPos fromLong(long l) {
+    int x = (int) (l >> 38);
+    int y = (int) ((l << 26) >> 52);
+    int z = (int) ((l << 38) >> 38);
+    return new BlockPos(x, y, z);
   }
 
   public static long toLong(BlockPos p) {
-    return Vec3.toLong(p);
+    return (((long) p.x) << 38) | (((long) p.y & 0xfff) << 26) | ((long) p.z & 0x3ffffff);
   }
 
   public BlockPos(int x, int y, int z) {
