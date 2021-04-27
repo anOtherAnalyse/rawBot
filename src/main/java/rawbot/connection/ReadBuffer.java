@@ -150,7 +150,7 @@ public class ReadBuffer {
   }
 
   public TextComponentBase readTextComponent() throws IOException {
-    return TextComponentBase.Serializer.jsonToComponent(this.readString());
+    return TextComponentBase.Serializer.jsonToComponent(this.readString(), false);
   }
 
   public ItemStack readItemStack() throws IOException {

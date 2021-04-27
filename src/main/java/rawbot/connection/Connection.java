@@ -148,7 +148,7 @@ public class Connection {
     out.read(buf);
 
     if(out instanceof DisconnectPacket) {
-      throw DisconnectedException.Serializer.jsonToComponent(((DisconnectPacket)out).getMessage());
+      throw new DisconnectedException(((DisconnectPacket) out).getReason().getUnformattedText());
     }
 
     if(buf.left() > 0) {

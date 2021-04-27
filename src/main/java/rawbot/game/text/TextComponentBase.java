@@ -1,10 +1,10 @@
 package rawbot.game.text;
 
+import java.lang.reflect.Type;
 import java.io.StringReader;
 import java.io.IOException;
 import java.util.List;
-import java.lang.reflect.Type;
-import java.lang.StringBuilder;
+import java.util.regex.Pattern;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializer;
@@ -19,6 +19,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.common.collect.Lists;
 
 public abstract class TextComponentBase {
+
+  private static final Pattern FORMAT_PATTERN = Pattern.compile("(?i)\u00a7[0-9A-FK-OR]");
 
   public static String getString(JsonElement json, String memberName) {
     if(json.isJsonPrimitive()) {
@@ -103,7 +105,7 @@ public abstract class TextComponentBase {
       }
     }
 
-    return stringbuilder.toString();
+    return TextComponentBase.FORMAT_PATTERN.matcher(stringbuilder.toString()).replaceAll("");
   }
 
   public static class Serializer implements JsonDeserializer<TextComponentBase> {
@@ -180,14 +182,13 @@ public abstract class TextComponentBase {
         return itextcomponent;
     }
 
-    public static TextComponentBase jsonToComponent(String json) {
+    public static TextComponentBase jsonToComponent(String json, boolean lenient) {
       try {
-        StringReader str_reader = new StringReader(json);
-        JsonReader jsonreader = new JsonReader(str_reader);
-        jsonreader.setLenient(false);
+        JsonReader jsonreader = new JsonReader(new StringReader(json));
+        jsonreader.setLenient(lenient);
         return (TextComponentBase) Serializer.GSON.getAdapter(TextComponentBase.class).read(jsonreader);
       } catch (IOException ioexception) {
-          throw new JsonParseException(ioexception);
+        throw new JsonParseException(ioexception);
       }
     }
 

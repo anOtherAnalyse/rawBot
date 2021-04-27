@@ -5,13 +5,14 @@ import java.io.IOException;
 import rawbot.connection.EnumConnectionState;
 import rawbot.connection.packets.in.PacketIn;
 import rawbot.connection.ReadBuffer;
+import rawbot.game.text.TextComponentBase;
 
 public class DisconnectPacket implements PacketIn {
 
-  private String message;
+  private TextComponentBase reason;
 
   public void read(ReadBuffer buf) throws IOException {
-    this.message = buf.readString();
+    this.reason = TextComponentBase.Serializer.jsonToComponent(buf.readString(), true);
   }
 
   public int getId(EnumConnectionState state) {
@@ -19,7 +20,7 @@ public class DisconnectPacket implements PacketIn {
     return 0;
   }
 
-  public String getMessage() {
-    return this.message;
+  public TextComponentBase getReason() {
+    return this.reason;
   }
 }
