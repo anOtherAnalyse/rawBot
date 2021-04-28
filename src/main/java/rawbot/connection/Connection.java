@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import javax.crypto.SecretKey;
@@ -44,6 +46,10 @@ public class Connection {
   private boolean cipher_enabled;
   private CipherUtil cipher;
 
+  /* Assure synchronization on socket operations */
+  private Lock read_lock;
+  private Lock write_lock;
+
   /* New connection to server */
   public Connection(String host, int port) throws IOException, UnknownHostException {
     this.socket = new Socket(host, port);
@@ -52,6 +58,9 @@ public class Connection {
 
     this.host = host;
     this.port = port;
+
+    this.read_lock = new ReentrantLock();
+    this.write_lock = new ReentrantLock();
 
     this.cipher_enabled = false;
     this.compressionThreshold = 0;
@@ -88,11 +97,13 @@ public class Connection {
   }
 
   /* Read next frame from socket */
-  private synchronized ReadBuffer readData() throws IOException {
+  private ReadBuffer readData() throws IOException {
 
     /* Read length varInt header */
     int length = 0, c, i = 0;
     byte[] head = new byte[2];
+
+    this.read_lock.lock();
 
     do {
       c = this.input.read();
@@ -127,6 +138,8 @@ public class Connection {
       clear = this.deflator.inflate(clear);
     }
 
+    this.read_lock.unlock();
+
     return new ReadBuffer(clear);
   }
 
@@ -159,13 +172,15 @@ public class Connection {
   }
 
   /* Write packet to socket */
-  public synchronized void writePacket(PacketOut p) throws IOException {
+  public void writePacket(PacketOut p) throws IOException {
 
     // payload
     int pid = p.getId(this.coState);
     WriteBuffer payload = new WriteBuffer();
     payload.writeVarInt(pid);
     p.write(payload);
+
+    this.write_lock.lock();
 
     // handle compression
     byte[] raw_payload = null;
@@ -188,6 +203,8 @@ public class Connection {
     } catch (IOException e) {
       throw new IOException("Socket closed by server");
     }
+
+    this.write_lock.unlock();
   }
 
   /* Close the connection */

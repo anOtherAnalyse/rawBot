@@ -45,7 +45,7 @@ public abstract class Bot {
 
   protected abstract void onDisconnected(IOException exception);
 
-  protected abstract void onTick(); // Ran 20 times per second
+  protected abstract void onTick(); // 20 times per second (on good conditions)
 
   /* Run the bot on a server */
   public void run(String host, int port, boolean authenticate, boolean stayConnected) {
@@ -227,10 +227,18 @@ public abstract class Bot {
 
     public void run() {
       while(! this.is_dead) {
+        long start = System.currentTimeMillis();
         this.bot.onTickAS();
+        long end = System.currentTimeMillis();
+
+        long tick_duration = end - start;
+        if(tick_duration >= 50) {
+          this.bot.dateAndPrint(String.format("Bot is exhausted, can't afford 20 ticks per seconds. Fix me. Tick duration: %d ms", tick_duration));
+          continue;
+        }
 
         try {
-          Thread.sleep(50);
+          Thread.sleep(50 - tick_duration);
         } catch (InterruptedException e) {
           this.bot.dateAndPrint("Tick thread was interrupted, aborting..", System.err);
           break;
