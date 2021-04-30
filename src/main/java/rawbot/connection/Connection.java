@@ -102,43 +102,44 @@ public class Connection {
     /* Read length varInt header */
     int length = 0, c, i = 0;
     byte[] head = new byte[2];
+    byte[] clear;
 
     this.read_lock.lock();
+    try {
+      do {
+        c = this.input.read();
 
-    do {
-      c = this.input.read();
+        if(c == -1) throw new IOException("Socket closed by server");
 
-      if(c == -1) throw new IOException("Socket closed by server");
+        if(this.cipher_enabled) { // Decrypt length header
+          head[0] = (byte)c;
+          this.cipher.decipher(head, 0, head, 1, 1);
+          c = ((int)head[1]);
+        }
 
-      if(this.cipher_enabled) { // Decrypt length header
-        head[0] = (byte)c;
-        this.cipher.decipher(head, 0, head, 1, 1);
-        c = ((int)head[1]);
+        length |= (c & 127) << ((i++) * 7);
+      } while((c & 128) != 0);
+
+      /* Read payload */
+      byte[] buff = new byte[length];
+      i = 0;
+      while(i < length) {
+        i += this.input.read(buff, i, length - i);
       }
 
-      length |= (c & 127) << ((i++) * 7);
-    } while((c & 128) != 0);
+      /* decrypt if needed */
+      if(this.cipher_enabled) {
+        clear = new byte[length];
+        this.cipher.decipher(buff, 0, clear, 0, length);
+      } else clear = buff;
 
-    /* Read payload */
-    byte[] buff = new byte[length];
-    i = 0;
-    while(i < length) {
-      i += this.input.read(buff, i, length - i);
+      /* inflate if needed */
+      if(this.compressionThreshold > 0) {
+        clear = this.deflator.inflate(clear);
+      }
+    } finally {
+      this.read_lock.unlock();
     }
-
-    /* decrypt if needed */
-    byte[] clear;
-    if(this.cipher_enabled) {
-      clear = new byte[length];
-      this.cipher.decipher(buff, 0, clear, 0, length);
-    } else clear = buff;
-
-    /* inflate if needed */
-    if(this.compressionThreshold > 0) {
-      clear = this.deflator.inflate(clear);
-    }
-
-    this.read_lock.unlock();
 
     return new ReadBuffer(clear);
   }
@@ -181,30 +182,32 @@ public class Connection {
     p.write(payload);
 
     this.write_lock.lock();
-
-    // handle compression
-    byte[] raw_payload = null;
-    if(this.compressionThreshold > 0) {
-      raw_payload = this.deflator.deflate(payload.getBuff());
-    } else raw_payload = payload.getBuff();
-
-    // add length header
-    WriteBuffer packet = new WriteBuffer();
-    packet.writeVarInt(raw_payload.length);
-    packet.writeBytes(raw_payload, raw_payload.length);
-
-    // handle encryption
     try {
-      if(this.cipher_enabled) {
-        output.write(this.cipher.cipher(packet.getBuff()));
-      } else {
-        output.write(packet.getBuff());
-      }
-    } catch (IOException e) {
-      throw new IOException("Socket closed by server");
-    }
 
-    this.write_lock.unlock();
+      // handle compression
+      byte[] raw_payload = null;
+      if(this.compressionThreshold > 0) {
+        raw_payload = this.deflator.deflate(payload.getBuff());
+      } else raw_payload = payload.getBuff();
+
+      // add length header
+      WriteBuffer packet = new WriteBuffer();
+      packet.writeVarInt(raw_payload.length);
+      packet.writeBytes(raw_payload, raw_payload.length);
+
+      // handle encryption
+      try {
+        if(this.cipher_enabled) {
+          output.write(this.cipher.cipher(packet.getBuff()));
+        } else {
+          output.write(packet.getBuff());
+        }
+      } catch (IOException e) {
+        throw new IOException("Socket closed by server");
+      }
+    } finally {
+      this.write_lock.unlock(); // Don't get deadlocked
+    }
   }
 
   /* Close the connection */
