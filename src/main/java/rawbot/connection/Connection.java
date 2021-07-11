@@ -166,7 +166,10 @@ public class Connection {
     }
 
     if(buf.left() > 0) {
-      throw new RuntimeException("Exceeding data for packet id " + Integer.toString(pid) + ", by " + Integer.toString(buf.left()) + " bytes");
+      //throw new RuntimeException("Exceeding data for packet id " + Integer.toString(pid) + ", by " + Integer.toString(buf.left()) + " bytes");
+      byte[] left = new byte[buf.left()];
+      buf.readBytes(left, left.length);
+      System.err.println(String.format("Error: exceeding data for packet id %d, by %d bytes. Raw data [%s]", pid, buf.left(), new String(left, StandardCharsets.UTF_8)));
     }
 
     return out;

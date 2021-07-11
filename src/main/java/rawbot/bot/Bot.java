@@ -171,13 +171,21 @@ public abstract class Bot {
     this.dateAndPrint(String.format("Connected to %s under username \"%s\"", this.co.getHost(), username), System.out);
   }
 
+  protected void disconnect() {
+    try {
+      this.co.close();
+    } catch(IOException except) {
+      this.dateAndPrint(String.format("Error: could not disconnect: %s", except.getMessage()), System.err);
+    }
+  }
+
   public void dateAndPrint(String message) {
     this.dateAndPrint(message, System.out);
   }
 
   public void dateAndPrint(String message, PrintStream stream) {
     Date now = new Date(System.currentTimeMillis());
-    stream.println(String.format("[%02d:%02d:%02d] %s", now.getHours(), now.getMinutes(), now.getSeconds(), message));
+    stream.println(String.format("[%02d/%02d - %02d:%02d:%02d] %s", now.getDate(), now.getMonth(), now.getHours(), now.getMinutes(), now.getSeconds(), message));
   }
 
   /* Asynchronous callbacks - make sure every bot operation is treated sequentially - easier to manage */
