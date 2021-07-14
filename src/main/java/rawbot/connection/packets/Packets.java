@@ -100,5 +100,6 @@ public class Packets {
     this.registerPacket(ScoreboardObjectivePacket.class, EnumConnectionState.PLAY);
     this.registerPacket(SetPassengersPacket.class, EnumConnectionState.PLAY);
     this.registerPacket(TeamPacket.class, EnumConnectionState.PLAY);
+    this.registerPacket(TimeUpdatePacket.class, EnumConnectionState.PLAY);
   }
 }

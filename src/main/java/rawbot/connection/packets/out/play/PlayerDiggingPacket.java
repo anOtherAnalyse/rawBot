@@ -22,7 +22,7 @@ public class PlayerDiggingPacket implements PacketOut {
 
   public void write(WriteBuffer buf) throws IOException {
     buf.writeVarInt(this.action.ordinal());
-    buf.writeLong(BlockPos.toLong(this.position));
+    buf.writeBlockPos(this.position);
     buf.writeByte((byte) this.facing.ordinal());
   }
 

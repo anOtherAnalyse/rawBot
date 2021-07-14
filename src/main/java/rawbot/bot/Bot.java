@@ -30,6 +30,7 @@ public abstract class Bot {
   private Connection co;
 
   protected int player_id;
+  protected String username;
 
   private Lock sequential_lock; // helps keeping all operations synchronous
 
@@ -166,9 +167,9 @@ public abstract class Bot {
 
   private void connect(String host, int port, boolean authenticate) throws IOException, UnknownHostException, AuthenticationException {
     ConnectionInit handle = new ConnectionInit(host, port, authenticate);
-    String username = handle.login();
+    this.username = handle.login();
     this.co = handle.getConnection();
-    this.dateAndPrint(String.format("Connected to %s under username \"%s\"", this.co.getHost(), username), System.out);
+    this.dateAndPrint(String.format("Connected to %s under username \"%s\"", this.co.getHost(), this.username), System.out);
   }
 
   protected void disconnect() {

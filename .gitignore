@@ -1,2 +1,4 @@
-# These files are just annoying
 .DS_Store
+dependency-reduced-pom.xml
+target
+token.txt

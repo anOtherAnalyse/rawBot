@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import rawbot.game.items.ItemStack;
 import rawbot.game.nbt.NBTTagCompound;
 import rawbot.game.nbt.CompressedStreamTools;
+import rawbot.game.position.BlockPos;
 
 public class WriteBuffer {
 
@@ -115,5 +116,9 @@ public class WriteBuffer {
       DataOutputStream dataStr = new DataOutputStream(this.stream);
       CompressedStreamTools.write(nbt, dataStr);
     }
+  }
+
+  public void writeBlockPos(BlockPos pos) {
+    this.writeLong(BlockPos.toLong(pos));
   }
 }
