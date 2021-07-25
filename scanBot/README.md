@@ -10,9 +10,14 @@ build the scan bot:
 
 The jar will be generated in ```scanBot/target/scanBot-1.0.jar```
 
-### Run
+### Run (Linux)
 ```
 rawBot/scanBot$ java -cp ../target/rawBot-1.0.jar:target/scanBot-1.0.jar scanbot.Main <center_x> <center_z> <radius> <host> [port]
+```
+
+### Run (Windows)
+```
+rawBot\scanBot> java -cp "..\target\rawBot-1.0.jar;target\scanBot-1.0.jar" scanbot.Main <center_x> <center_z> <radius> <host> [port]
 ```
 
 ```(center_x, center_z)``` - area center (coords in blocks)  
